@@ -1,4 +1,4 @@
-const logger = (req,res,next) => {
+const logger = (req, res, next) => {
   const method = req.method;
   const url = req.url;
   const time = new Date().getFullYear();
@@ -6,4 +6,4 @@ const logger = (req,res,next) => {
   next();
 };
 
-module.exports = logger
+module.exports = logger;
