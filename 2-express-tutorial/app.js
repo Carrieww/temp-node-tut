@@ -1,33 +1,48 @@
-const http = require("http");
-const { readFileSync } = require("fs");
+// middleware are functions that execute during the request to the server.
+// express apps are nothing but a bunch of middleware functions.
 
-// get all files
-// 放在这里因为 only request this index.html once
-const homePage = readFileSync('./index.html')
+const express = require("express");
+const app = express();
+const logger = require('./logger')
+const authorize = require('./authorize')
 
-// the callback will be invoked everytime the user hits our server
-// req is the info comming in
+//req => middleware => res
 
-const server = http.createServer((req, res) => {
-  const url = req.url; // req.method = "GET"
-  if (url === "/") {
-    // we are providing headers (最常见的是content-type，告诉server 我们要传输的是json or html or plain ...),
-    // metadata about our response
-    res.writeHead(200, { "content-type": "text/html" });
-    // in every response, we have to have res.end to signal that our communication is over
-    res.write(homePage);
-    res.end();
-  } else if (url === "/about") {
-    // about page
-    res.writeHead(200, { "content-type": "text/html" });
-    res.write("<h1>about page</h1>");
-    res.end();
-  } else {
-    // 404
-    res.writeHead(404, { "content-type": "text/html" });
-    res.write("<h1>page not found</h1>");
-    res.end();
-  }
+// 除非这个middleware自己带有res.send()去send back response， 否则一定要加next为argument 并 call next()
+// const logger = (req,res,next) => {
+//   const method = req.method;
+//   const url = req.url;
+//   const time = new Date().getFullYear();
+//   console.log(method, url, time);
+//   next();
+// };
+// Best practice is to put this logger in a seperate file logger.js!
+
+// instead of manually adding logger middleware to all routes
+// we can add the following line of code without the first argument
+// app.use will invoke logger for every route BELOW it!!! ORDER MATTERS!!!
+
+// 除了位置，我们也可以add the first path argument, logger will be applied to every route startWith your path
+// e.g. /api will apply logger to both /api/products and /api/items
+app.use([logger,authorize]) // the execution of middleware funtions will follow the order
+
+
+app.get("/",(req, res) => {
+  res.send("Home");
 });
 
-server.listen(3000);
+app.get("/about", (req, res) => {
+  res.send("About");
+});
+
+app.get("/api/products", (req, res) => {
+  res.send("Products");
+});
+
+app.get("/api/items", (req, res) => {
+  res.send("Items");
+});
+
+app.listen(3000, () => {
+  console.log("Server is listening on port 3000");
+});
